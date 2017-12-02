@@ -1,0 +1,7 @@
+name: EyspUHC
+main: eyspuhc.EyspUHC
+version: 1.0
+commands:
+  setup:
+    description: Setup and initialize the game - does not begin game
+    usage: /setup

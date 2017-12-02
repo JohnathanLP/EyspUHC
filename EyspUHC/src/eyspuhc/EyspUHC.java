@@ -6,7 +6,7 @@ public class EyspUHC extends JavaPlugin
 {
 	@Override
 	public void onEnable(){
-		this.getCommand("begin").setExecutor(new BeginGameCommand());
+		this.getCommand("setup").setExecutor(new SetupGameCommand());
 	}
 	@Override
 	public void onDisable(){

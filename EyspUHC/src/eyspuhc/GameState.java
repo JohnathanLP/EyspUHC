@@ -1,6 +1,9 @@
 package eyspuhc;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -70,7 +73,7 @@ public enum GameState
 			Bukkit.dispatchCommand(sender, "gamerule announceAdvancements false");
 				
 			//set location to a specific height above terrain
-			spawn = new Location(world, x+0.5, y, z+0.5);
+			spawn = new Location(world, x+3.5, y, z+0.5);
 			
 			//set worldborders
 			WorldBorder border = world.getWorldBorder();
@@ -91,12 +94,12 @@ public enum GameState
 				}
 			}			
 			Team liveTeam = scoreboard.registerNewTeam("live");
-			liveTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+			liveTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
 			//TODO fix this
 			//liveTeam.setColor(ChatColor.GREEN);
 			Bukkit.dispatchCommand(sender, "scoreboard teams option live color green");
 			Team deadTeam = scoreboard.registerNewTeam("dead");
-			deadTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
+			deadTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
 			//TODO fix this
 			//deadTeam.setColor(ChatColor.RED);
 			Bukkit.dispatchCommand(sender, "scoreboard teams option dead color red");
@@ -163,6 +166,10 @@ public enum GameState
 			Bukkit.dispatchCommand(sender, "spreadplayers 0 0 200 500 false @a");
 			//spreadplayers <x> <z> <spreadDistance> <maxRange> <respectTeams> <player …>
 			
+			//TODO fix this
+			//give all players all recipes
+			Bukkit.dispatchCommand(sender, "recipe give @a *");
+			
 			// set worldborders to shrink
 			// TODO balance these values
 			Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("EyspUHC"), new Runnable(){
@@ -192,29 +199,106 @@ public enum GameState
 	/*
 	 * HELPER FUNCTIONS
 	 */
-	public static boolean buildPlatform(World world)
+	public static boolean buildPlatform(World world) 
 	{
 		//TODO program platform array input
-		Location target = new Location(world,x,y,z);
-		int platX = x-5;
-		int platY = y-2;
-		int platZ = z-5;
-		target.add(-5,-2,-5);
-		for(int i=0; i<5; i++)
+		Scanner platformIn;
+		try 
 		{
-			for(int j=0; j<10; j++)
+			File file = new File("UHCConfig/platform.txt");
+			platformIn = new Scanner(file);
+			//size of platform (from file)
+			int sizeX = Integer.parseInt(platformIn.next());
+			int sizeZ = Integer.parseInt(platformIn.next());
+			int sizeY = Integer.parseInt(platformIn.next());
+			//indicates the top corner of the platform
+			int platX = x-Math.round(sizeX/2);
+			int platY = y+2;
+			int platZ = z-Math.round(sizeZ/2);
+			
+			String row = "";
+			for(int i=0; i<sizeY; i++)
 			{
-				for(int k=0; k<10; k++)
+				for(int j=0; j<sizeZ; j++)
 				{
-					if(i == 0 || j == 0 || k == 0 || j == 9 || k == 9)
+					row = platformIn.next();
+					for(int k=0; k<sizeX; k++)
 					{
-						new Location(world,platX+j,platY+i,platZ+k).getBlock().setType(Material.BARRIER);
+						switch(row.charAt(k))
+						{
+						case '.':
+							//place air
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.AIR);
+							break;
+						case 'B':
+							//place barrier
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.BARRIER);
+							break;
+						case 'G':
+							//place glass
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.GLASS);
+							break;
+						case 'g':
+							//place glass pane
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.THIN_GLASS);
+							break;
+						case 'O':
+							//place obsidian
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.OBSIDIAN);
+							break;
+						case 'i':
+							//place ice
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.ICE);
+							break;
+						case 'I':
+							//place packed ice
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.PACKED_ICE);
+							break;
+						case 'W':
+							//place water
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.WATER);
+							break;
+						case 'S':
+							//place sea lantern
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.SEA_LANTERN);
+							break;
+						case 'f':
+							//place fire
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.FIRE);
+							break;
+						case 'Q':
+							//place quartz block
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.QUARTZ_BLOCK);
+							break;
+						case 'N':
+							//place netherrack
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.NETHERRACK);
+							break;
+						case 'L':
+							//place lava
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.LAVA);
+							break;
+						case 'b':
+							//place iron bars
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.IRON_FENCE);
+							break;
+						case 's':
+							//place stone brick
+							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.SMOOTH_BRICK);
+							break;
+						}
 					}
-					//target.add(1,0,0);
 				}
-				//target.add(-10,0,1);
 			}
-			//target.add(-10,1,-10);
+			
+			Bukkit.broadcastMessage("Platform dimensions: " + sizeX + ", " + sizeZ + ", " + sizeY);
+			
+			platformIn.close();
+		} 
+		catch (FileNotFoundException e) 
+		{
+			Bukkit.broadcastMessage("Problem constructing platform: File not found!");
+			e.printStackTrace();
 		}
 		return true;
 	}
@@ -260,11 +344,14 @@ public enum GameState
 		// return true if player already exists in playerList
 		for(Player t : playerList)
 		{
-			if(t.equals(playerIn))
+			if(t.getName().equals(playerIn.getName()))
 			{
+				Bukkit.broadcastMessage("Existing Player");
 				return true;
 			}
 		}
+		
+		Bukkit.broadcastMessage("New Player");
 		
 		// else, handle player as needed
 		if(currPhase.equals("setup"))
@@ -291,6 +378,17 @@ public enum GameState
 		//set player to spectator, move to dead team
 		Bukkit.getScoreboardManager().getMainScoreboard().getTeam("dead").addEntry(playerIn.getName());
 		playerIn.setGameMode(GameMode.SPECTATOR);
+		//test if only one player is still alive
+		int remaining = Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").getEntries().size();
+		if(remaining == 1)
+		{
+			String winnerName = Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").getName();
+			Bukkit.broadcastMessage("Game Over! " + winnerName + "is the winner!");
+		}
+		else
+		{
+			Bukkit.broadcastMessage("There are " + remaining + " players remaining. Fight on!");
+		}
 		return true;
 	}
 	

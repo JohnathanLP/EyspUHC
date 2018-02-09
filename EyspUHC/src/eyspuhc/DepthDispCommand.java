@@ -12,7 +12,7 @@ public class DepthDispCommand implements CommandExecutor
 	{
 		Player player = (Player) sender;
 		player.sendMessage("Your Y coordinate is: " + player.getLocation().getY());
-		
+				
 		return false;
 	}
 

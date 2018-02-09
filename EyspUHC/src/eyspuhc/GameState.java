@@ -82,6 +82,7 @@ public enum GameState
 			
 			//create platform
 			buildPlatform(world);
+			//BuildTemplate.build(new Location(world, x,y,z), new File("UHCConfig/platform.txt"));
 			
 			//create teams for live and dead players
 			Scoreboard scoreboard = Bukkit.getServer().getScoreboardManager().getMainScoreboard();

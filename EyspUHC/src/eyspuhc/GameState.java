@@ -2,9 +2,11 @@ package eyspuhc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
@@ -26,11 +28,12 @@ public enum GameState
 	//TODO use this
 	INACTIVE, SETUP, PHASE1, PHASE2, COMPLETE;
 	
-	private static List<Player> playerList;
+	//private static List<Player> playerList;
+	private static List<UUID> playerIDList = new ArrayList<UUID>();
 	private static Location spawn;
 	private static String currPhase = "inactive";
 	private static int x = 0;
-	private static int y = 150;
+	private static int y = 200;
 	private static int z = 0;
 	
 	/*
@@ -73,13 +76,13 @@ public enum GameState
 			Bukkit.dispatchCommand(sender, "gamerule announceAdvancements false");
 				
 			//set location to a specific height above terrain
-			spawn = new Location(world, x+3.5, y, z+0.5);
+			spawn = new Location(world, x+0.5, y, z+0.5);
 			
 			//set worldborders
 			WorldBorder border = world.getWorldBorder();
 			border.setCenter(new Location(world, x,y,z));
 			border.setSize(1000);
-			
+						
 			//create platform
 			buildPlatform(world);
 			//BuildTemplate.build(new Location(world, x,y,z), new File("UHCConfig/platform.txt"));
@@ -96,6 +99,7 @@ public enum GameState
 			}			
 			Team liveTeam = scoreboard.registerNewTeam("live");
 			liveTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
+			
 			//TODO fix this
 			//liveTeam.setColor(ChatColor.GREEN);
 			Bukkit.dispatchCommand(sender, "scoreboard teams option live color green");
@@ -109,14 +113,12 @@ public enum GameState
 			//TODO fix this
 			Bukkit.dispatchCommand(sender, "scoreboard objectives add health health");
 			Bukkit.dispatchCommand(sender, "scoreboard objectives setdisplay list health");
-			
-			// scan for all present players - add them to gamestate list
-			playerList = player.getWorld().getPlayers();
-			
-			//make needed changes for each player
-			for(Player t : playerList)
+				
+			//scan for all players, add their ID to the list
+			for(Player t : player.getWorld().getPlayers())
 			{
-				playerSetup(t);
+				playerIDList.add(t.getUniqueId());
+				playerSetup(t.getUniqueId());
 			}
 			return true;
 		}
@@ -156,8 +158,11 @@ public enum GameState
 			// set difficulty to peaceful
 			world.setDifficulty(Difficulty.HARD);
 			
+			//remove platform
+			removePlatform(world);
+			
 			//make needed changes for each player
-			for(Player t : playerList)
+			for(UUID t : playerIDList)
 			{
 				playerBegin(t);
 			}
@@ -200,6 +205,7 @@ public enum GameState
 	/*
 	 * HELPER FUNCTIONS
 	 */
+	@SuppressWarnings("deprecation")
 	public static boolean buildPlatform(World world) 
 	{
 		//TODO program platform array input
@@ -214,86 +220,59 @@ public enum GameState
 			int sizeY = Integer.parseInt(platformIn.next());
 			//indicates the top corner of the platform
 			int platX = x-Math.round(sizeX/2);
-			int platY = y+2;
+			int platY = y+sizeY-2;
 			int platZ = z-Math.round(sizeZ/2);
-			
-			String row = "";
+			//offsets player from center
+			int spawnOffset = platformIn.nextInt();
+			spawn.add(spawnOffset, 0, 0);
+			//gets ids and symbols
+			int idCount = platformIn.nextInt();
+			List<Character> symbols = new ArrayList<Character>();
+			List<String> ids = new ArrayList<String>();
+			for(int i=0; i<idCount; i++)
+			{
+				symbols.add(platformIn.next().charAt(0));
+				ids.add(platformIn.next());
+			}
+						
+			Bukkit.broadcastMessage("Platform dimensions: " + sizeX + ", " + sizeZ + ", " + sizeY);
+					
 			for(int i=0; i<sizeY; i++)
 			{
 				for(int j=0; j<sizeZ; j++)
 				{
-					row = platformIn.next();
 					for(int k=0; k<sizeX; k++)
 					{
-						switch(row.charAt(k))
+						char symbolIn = platformIn.next().charAt(0);
+						int idIn = 0;
+						int mdIn = 0;
+						for(int t=0; t<symbols.size(); t++)
 						{
-						case '.':
-							//place air
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.AIR);
-							break;
-						case 'B':
-							//place barrier
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.BARRIER);
-							break;
-						case 'G':
-							//place glass
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.GLASS);
-							break;
-						case 'g':
-							//place glass pane
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.THIN_GLASS);
-							break;
-						case 'O':
-							//place obsidian
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.OBSIDIAN);
-							break;
-						case 'i':
-							//place ice
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.ICE);
-							break;
-						case 'I':
-							//place packed ice
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.PACKED_ICE);
-							break;
-						case 'W':
-							//place water
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.WATER);
-							break;
-						case 'S':
-							//place sea lantern
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.SEA_LANTERN);
-							break;
-						case 'f':
-							//place fire
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.FIRE);
-							break;
-						case 'Q':
-							//place quartz block
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.QUARTZ_BLOCK);
-							break;
-						case 'N':
-							//place netherrack
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.NETHERRACK);
-							break;
-						case 'L':
-							//place lava
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.LAVA);
-							break;
-						case 'b':
-							//place iron bars
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.IRON_FENCE);
-							break;
-						case 's':
-							//place stone brick
-							new Location(world,platX+k, platY-i, platZ+j).getBlock().setType(Material.SMOOTH_BRICK);
-							break;
+							if(symbols.get(t) == symbolIn)
+							{
+								if (ids.get(t).contains(":"))
+								{
+									idIn = Integer.parseInt(ids.get(t).split(":")[0]);
+									mdIn = Integer.parseInt(ids.get(t).split(":")[1]);		
+								}
+								else
+								{
+									idIn = Integer.parseInt(ids.get(t));
+								}
+								break;
+							}
 						}
+						new Location(world, platX+k, platY-i, platZ+j).getBlock().setTypeId(idIn);
+						if(mdIn != 0)
+						{
+							new Location(world, platX+k, platY-i, platZ+j).getBlock().setData((byte) mdIn);
+						}
+						//new Location(world, platX+k, platY-i, platZ+j).getBlock().setType(Material.GLASS);
+						
 					}
 				}
 			}
-			
-			Bukkit.broadcastMessage("Platform dimensions: " + sizeX + ", " + sizeZ + ", " + sizeY);
-			
+				
 			platformIn.close();
 		} 
 		catch (FileNotFoundException e) 
@@ -304,8 +283,66 @@ public enum GameState
 		return true;
 	}
 	
-	public static boolean playerSetup(Player playerIn)
+	public static boolean removePlatform(World world) 
 	{
+		//TODO program platform array input
+		Scanner platformIn;
+		try 
+		{
+			File file = new File("UHCConfig/platform.txt");
+			platformIn = new Scanner(file);
+			//size of platform (from file)
+			int sizeX = Integer.parseInt(platformIn.next());
+			int sizeZ = Integer.parseInt(platformIn.next());
+			int sizeY = Integer.parseInt(platformIn.next());
+			//indicates the top corner of the platform
+			int platX = x-Math.round(sizeX/2);
+			int platY = y+sizeY-2;
+			int platZ = z-Math.round(sizeZ/2);
+								
+			for(int i=0; i<sizeY; i++)
+			{
+				for(int j=0; j<sizeZ; j++)
+				{
+					for(int k=0; k<sizeX; k++)
+					{
+						new Location(world, platX+k, platY-i, platZ+j).getBlock().setType(Material.AIR);				
+					}
+				}
+			}
+				
+			platformIn.close();
+		} 
+		catch (FileNotFoundException e) 
+		{
+			Bukkit.broadcastMessage("Problem removing platform: File not found!");
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public static Material getBlockFromID(int idIn, int metadataIn)
+	{
+		switch (idIn)
+		{
+		case 0:
+			return Material.AIR;
+		case 1:
+			return Material.STONE;
+		case 2:
+			return Material.GRASS;
+		case 3:
+			return Material.DIRT;
+		case 4:
+			return Material.COBBLESTONE;
+		}
+		return Material.AIR;
+	}
+	
+	public static boolean playerSetup(UUID playerIDIn)
+	{
+		//get player
+		Player playerIn = Bukkit.getPlayer(playerIDIn);
 		//move player to platform, set spawn
 		playerIn.setBedSpawnLocation(spawn, true);
 		playerIn.teleport(spawn);
@@ -321,8 +358,10 @@ public enum GameState
 		return true;
 	}
 	
-	public static boolean playerBegin(Player playerIn)
+	public static boolean playerBegin(UUID playerIDIn)
 	{
+		//get player
+		Player playerIn = Bukkit.getPlayer(playerIDIn);
 		//set gamemode, remove resistance, saturation and regeneration
 		playerIn.setGameMode(GameMode.SURVIVAL);
 		playerIn.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
@@ -343,9 +382,9 @@ public enum GameState
 	public static boolean playerJoin(Player playerIn)
 	{
 		// return true if player already exists in playerList
-		for(Player t : playerList)
+		for(UUID t : playerIDList)
 		{
-			if(t.getName().equals(playerIn.getName()))
+			if(Bukkit.getPlayer(t).getUniqueId().equals(playerIn.getUniqueId()))
 			{
 				Bukkit.broadcastMessage("Existing Player");
 				return true;
@@ -357,8 +396,8 @@ public enum GameState
 		// else, handle player as needed
 		if(currPhase.equals("setup"))
 		{
-			playerList.add(playerIn);
-			playerSetup(playerIn);
+			playerIDList.add(playerIn.getUniqueId());
+			playerSetup(playerIn.getUniqueId());
 		}
 		else if(currPhase.equals("inactive"))
 		{
@@ -368,7 +407,7 @@ public enum GameState
 		else
 		{
 			// game is in progress, "kill" player
-			playerList.add(playerIn);
+			playerIDList.add(playerIn.getUniqueId());
 			playerDeath(playerIn);
 		}
 		return true;
@@ -386,7 +425,7 @@ public enum GameState
 			String winnerName = Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").getName();
 			Bukkit.broadcastMessage("Game Over! " + winnerName + "is the winner!");
 		}
-		else
+		else if(remaining > 1)
 		{
 			Bukkit.broadcastMessage("There are " + remaining + " players remaining. Fight on!");
 		}

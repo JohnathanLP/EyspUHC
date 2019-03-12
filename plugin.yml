@@ -1,0 +1,14 @@
+name: EyspUHC
+main: eyspuhc.EyspUHC
+version: 1.0
+api-version: 1.13
+commands:
+  setup:
+    description: Setup and initialize the game - does not begin game
+    usage: /setup
+  begin:
+    description: Begins game
+    usage: /begin
+  depth:
+    description: Gives a specific player their Y coordinate. Allows for use of reducedDebugInfo
+    usage: /depth

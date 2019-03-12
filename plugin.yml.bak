@@ -1,0 +1,13 @@
+name: EyspUHC
+main: eyspuhc.EyspUHC
+version: 1.0
+commands:
+  setup:
+    description: Setup and initialize the game - does not begin game
+    usage: /setup
+  begin:
+    description: Scatters players and begins the game
+    usage: /begin
+  depth:
+    description: Gives a specific player their Y coordinate. Allows for use of reducedDebugInfo
+    usage: /depth

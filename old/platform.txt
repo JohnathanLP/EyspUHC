@@ -1,0 +1,35 @@
+10 10 3
+1
+G 20
+GGGGGGGGGG
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+GGGGGGGGGG
+
+GGGGGGGGGG
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+G        G
+GGGGGGGGGG
+
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG
+GGGGGGGGGG

@@ -43,10 +43,10 @@ public enum GameState
 	private static int y = 200;
 	private static int z = 0;
 
-  private static int wbsize_initial = 1000;
-  private static int wbsize_final = 50;
-  private static int wbcollapse_delay = 10;           // in seconds
-  private static int wbcollapse_duration = 10;        // in seconds
+  private static int wbsize_initial = 100;            // length of a side (initially)
+  private static int wbsize_final = 50;               // length of a side (finally)
+  private static int wbcollapse_delay = 10;           // time until sides collapse (in seconds)
+  private static int wbcollapse_duration = 10;        // time that sides take to collapse (in seconds)
 
 	/*
 	 * PHASE INITIALIZATION
@@ -100,6 +100,8 @@ public enum GameState
       buildPlatform(overworld, false);
 
       // TODO remove item drops (specifically for broken entities from the platform gen)
+	  Bukkit.dispatchCommand(sender, "kill @e[type=item]");
+      
 
       // create teams
       Scoreboard scoreboard = Bukkit.getServer().getScoreboardManager().getMainScoreboard();
@@ -439,7 +441,7 @@ public enum GameState
 	 * END HELPER FUNCTIONS
 	 */
 
-	/*
+    /*
 	 * BEGIN EVENT FUNCTIONS
 	 */
 

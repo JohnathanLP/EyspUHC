@@ -11,20 +11,22 @@ import org.bukkit.NamespacedKey;
 public class EyspUHC extends JavaPlugin
 {
 	@Override
-	public void onEnable(){
+	public void onEnable()
+    {
 		this.getCommand("setup").setExecutor(new SetupGameCommand());
 		this.getCommand("begin").setExecutor(new BeginGameCommand());
 		this.getCommand("depth").setExecutor(new DepthDispCommand());
+        this.getCommand("end").setExecutor(new EndGameCommand());
 		getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 		getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
 
-    ItemStack item = new ItemStack(Material.TRIDENT);
-    ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "Trident"), item);
-    recipe.shape("IDI", " S ", " S ");
-    recipe.setIngredient('I', Material.IRON_INGOT);
-    recipe.setIngredient('D', Material.DIAMOND);
-    recipe.setIngredient('S', Material.STICK);
-    Bukkit.addRecipe(recipe);
+        ItemStack item = new ItemStack(Material.TRIDENT);
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "Trident"), item);
+        recipe.shape("DID", " S ", " S ");
+        recipe.setIngredient('I', Material.IRON_INGOT);
+        recipe.setIngredient('D', Material.DIAMOND);
+        recipe.setIngredient('S', Material.STICK);
+        Bukkit.addRecipe(recipe);
 	}
 	@Override
 	public void onDisable(){

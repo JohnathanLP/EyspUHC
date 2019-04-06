@@ -9,6 +9,9 @@ commands:
   begin:
     description: Begins game
     usage: /begin
+  end:
+    description: Ends game
+    usage: /end
   depth:
     description: Gives a specific player their Y coordinate. Allows for use of reducedDebugInfo
     usage: /depth

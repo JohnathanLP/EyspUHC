@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Random;
 
 import org.bukkit.block.Block;
 import org.bukkit.Bukkit;
@@ -31,7 +32,7 @@ import org.bukkit.scoreboard.Team;
 import org.bukkit.scoreboard.Team.Option;
 
 public enum GameState
-{
+{    
 	//TODO use this
 	INACTIVE, SETUP, PHASE1, PHASE2, COMPLETE;
 
@@ -43,112 +44,111 @@ public enum GameState
 	private static int y = 200;
 	private static int z = 0;
 
-  private static int wbsize_initial = 100;            // length of a side (initially)
-  private static int wbsize_final = 50;               // length of a side (finally)
-  private static int wbcollapse_delay = 10;           // time until sides collapse (in seconds)
-  private static int wbcollapse_duration = 10;        // time that sides take to collapse (in seconds)
+    private static int wbsize_initial = 1000;            // length of a side (initially)
+    private static int wbsize_final = 50;               // length of a side (finally)
+    private static int wbcollapse_delay = 300;          // time until sides collapse (in seconds)
+    private static int wbcollapse_duration = 1200;        // time that sides take to collapse (in seconds)
 
 	/*
 	 * PHASE INITIALIZATION
 	 */
 	public static boolean setup(CommandSender sender)
 	{
-		if(currPhase.equals("inactive"))
+	    if(currPhase.equals("inactive"))
 		{
-			// set phase
+		    // set phase
 			currPhase = "setup";
 
 			// create objects
 			Player admin = (Player) sender;
-      World overworld = admin.getWorld();
+            World overworld = admin.getWorld();
 			List<World> worlds = Bukkit.getWorlds();
 
-      // set spawn Location
-      spawn = new Location(overworld, x+0.5, y, z+0.5);
+            // set spawn Location
+            spawn = new Location(overworld, x+0.5, y, z+0.5);
 
 			// announce setup
 			Bukkit.broadcastMessage("UHC Setup in Progress");
 
-      // set day
-      overworld.setTime(1000);
+            // set day
+            overworld.setTime(1000);
 
-      // TODO clear weather
+            // TODO clear weather
 
-      // set world borders
-      overworld.getWorldBorder().setCenter(spawn);
-      overworld.getWorldBorder().setSize(wbsize_initial);
+            // set world borders
+            overworld.getWorldBorder().setCenter(spawn);
+            overworld.getWorldBorder().setSize(wbsize_initial);
 
-      // loop through all dimensions to set game rules
-      for (World world: worlds)
-      {
-        // disable daylight cycle
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        // disable natural regeneration
-        world.setGameRule(GameRule.NATURAL_REGENERATION, false);
-        // disable weather
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
-        // reduced debug screen
-        world.setGameRule(GameRule.REDUCED_DEBUG_INFO, true);
-        // disable achievement announceAchievements
-        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-        // set difficulty to peaceful
-        world.setDifficulty(Difficulty.PEACEFUL);
-      }
+            // loop through all dimensions to set game rules
+            for (World world: worlds)
+            {
+                // disable daylight cycle
+                world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+                // disable natural regeneration
+                world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+                // disable weather
+                world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+                // reduced debug screen
+                world.setGameRule(GameRule.REDUCED_DEBUG_INFO, true);
+                // disable achievement announceAchievements
+                world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+                // set difficulty to peaceful
+                world.setDifficulty(Difficulty.PEACEFUL);
+            }
 
-      // build platform - TODO Call twice to allow carpet and glass panes to form correctly
-      buildPlatform(overworld, false);
-      buildPlatform(overworld, false);
+            // build platform - TODO Call twice to allow carpet and glass panes to form correctly
+            buildPlatform(overworld, false);
+            buildPlatform(overworld, false);
 
-      // TODO remove item drops (specifically for broken entities from the platform gen)
-	  Bukkit.dispatchCommand(sender, "kill @e[type=item]");
+            // TODO remove item drops (specifically for broken entities from the platform gen)
+	        Bukkit.dispatchCommand(sender, "kill @e[type=item]");
       
-
-      // create teams
-      Scoreboard scoreboard = Bukkit.getServer().getScoreboardManager().getMainScoreboard();
-      Set<Team> existingTeams = scoreboard.getTeams();
-      // delete existing teams
-      if (!existingTeams.isEmpty())
+            // create teams
+            Scoreboard scoreboard = Bukkit.getServer().getScoreboardManager().getMainScoreboard();
+            Set<Team> existingTeams = scoreboard.getTeams();
+            // delete existing teams
+            if (!existingTeams.isEmpty())
 			{
-				for(Team team:existingTeams)
+			    for(Team team:existingTeams)
 				{
-					scoreboard.getTeam(team.getName()).unregister();
+				    scoreboard.getTeam(team.getName()).unregister();
 				}
 			}
-      Team liveTeam = scoreboard.registerNewTeam("live");
-      Team deadTeam = scoreboard.registerNewTeam("dead");
+            Team liveTeam = scoreboard.registerNewTeam("live");
+            Team deadTeam = scoreboard.registerNewTeam("dead");
 
-      // configure teams
-      liveTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
-      liveTeam.setColor(ChatColor.GREEN);
-	    deadTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
-      deadTeam.setColor(ChatColor.RED);
+            // configure teams
+            liveTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
+            liveTeam.setColor(ChatColor.GREEN);
+	        deadTeam.setOption(Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+            deadTeam.setColor(ChatColor.RED);
 
-      // clear objectives
-      if (!scoreboard.getObjectives().isEmpty())
-      {
-        for (Objective objective: scoreboard.getObjectives())
-        {
-          objective.unregister();
+            // clear objectives
+            if (!scoreboard.getObjectives().isEmpty())
+            {
+                for (Objective objective: scoreboard.getObjectives())
+                {
+                    objective.unregister();
+                }
+            }
+
+            // add health to tab menu
+            scoreboard.registerNewObjective("health", "health", "Health");
+            scoreboard.getObjective("health").setDisplaySlot(DisplaySlot.PLAYER_LIST);
+            scoreboard.getObjective("health").setRenderType(RenderType.HEARTS);
+
+            // loop through all players currently connected, setup each
+            for (Player player: Bukkit.getOnlinePlayers())
+            {
+                //Bukkit.broadcastMessage("Detected player " + player.getDisplayName() + " with UUID " + player.getUniqueId());
+                playerSetup(player.getUniqueId());
+            }
+
+            return true;
         }
-      }
 
-      // add health to tab menu
-      scoreboard.registerNewObjective("health", "health", "Health");
-      scoreboard.getObjective("health").setDisplaySlot(DisplaySlot.PLAYER_LIST);
-      scoreboard.getObjective("health").setRenderType(RenderType.HEARTS);
-
-      // loop through all players currently connected, setup each
-      for (Player player: Bukkit.getOnlinePlayers())
-      {
-        //Bukkit.broadcastMessage("Detected player " + player.getDisplayName() + " with UUID " + player.getUniqueId());
-        playerSetup(player.getUniqueId());
-      }
-
-      return true;
-    }
-
-    // handle other phases
-    else if (currPhase.equals("setup"))
+        // handle other phases
+        else if (currPhase.equals("setup"))
 		{
 			Bukkit.broadcastMessage("Setup has already begun!");
 		}
@@ -165,15 +165,15 @@ public enum GameState
 
 	public static boolean begin(CommandSender sender)
 	{
-		if(currPhase.equals("setup"))
+	    if(currPhase.equals("setup"))
 		{
-			//set phase
+		    //set phase
 			currPhase = "phase1";
 
-      // create objects
-      Player admin = (Player) sender;
-      World overworld = admin.getWorld();
-      List<World> worlds = Bukkit.getWorlds();
+            // create objects
+            Player admin = (Player) sender;
+            World overworld = admin.getWorld();
+            List<World> worlds = Bukkit.getWorlds();
 
 			//announce setup
 			Bukkit.broadcastMessage("Start!");
@@ -181,18 +181,18 @@ public enum GameState
 			//set day
 			overworld.setTime(1000);
 
-      // TODO clear weather
+            // TODO clear weather
 
-      // loop through all dimensions to set game rules
-      for (World world: worlds)
-      {
-        // enable daylight cycle
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-        // enable weather
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
-        // set difficulty to hard
-        world.setDifficulty(Difficulty.HARD);
-      }
+            // loop through all dimensions to set game rules
+            for (World world: worlds)
+            {
+                // enable daylight cycle
+                world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+                // enable weather
+                world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+                // set difficulty to hard
+                world.setDifficulty(Difficulty.HARD);
+            } 
 
 			// remove platform
 			removePlatform(overworld);
@@ -205,7 +205,7 @@ public enum GameState
 
 			//TODO fix this
 			// scatter players
-			Bukkit.dispatchCommand(sender, "spreadplayers 0 0 200 " + wbsize_initial/2 +" false @a");
+			Bukkit.dispatchCommand(sender, "spreadplayers 0 0 100 " + wbsize_initial/2 +" false @a");
 			//spreadplayers <x> <z> <spreadDistance> <maxRange> <respectTeams> <player …>
 
 			//TODO fix this
@@ -215,11 +215,9 @@ public enum GameState
 			// set worldborders to shrink
 			// TODO update phase to phase2
 			Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("EyspUHC"), new Runnable(){
-        // announce borders shrinking
-				public void run(){Bukkit.broadcastMessage("Borders are now shrinking!");
-        // set borders to shrink
-				overworld.getWorldBorder().setSize(wbsize_final, wbcollapse_duration);}
-			}, wbcollapse_delay*20);
+			                    public void run(){Bukkit.broadcastMessage("Borders are now shrinking!");    // announce borders shrinking
+                                overworld.getWorldBorder().setSize(wbsize_final, wbcollapse_duration);}     // set borders to shrink
+                    			}, wbcollapse_delay*20);                                                    //after delay
 			return true;
 		}
 		else if (currPhase.equals("inactive"))
@@ -237,11 +235,11 @@ public enum GameState
 		return false;
 	}
 
-  public static boolean end()
+    public static boolean end()
 	{
-    playerIDList = new ArrayList<UUID>();
-    return true;
-  }
+        playerIDList = new ArrayList<UUID>();
+        return true;
+    }
 
 	/*
 	 * END PHASE INITIALIZATION
@@ -251,14 +249,17 @@ public enum GameState
 	 * HELPER FUNCTIONS
 	 */
 
-	//@SuppressWarnings("deprecation")
+    // Platform builder method - currently takes a boolean value for testing to enable/disable
+    // helpful debugging messages. The intent is to eventually add a platform testing command
+    // for easy testing of new platform.txt files - with additional information printed out.
+    // Currently it is only called with false
 	public static boolean buildPlatform(World world, boolean testing)
 	{
-		//TODO program platform array input
+	    //TODO program platform array input
 		Scanner platformIn;
 		try
 		{
-			File file = new File("UHCConfig/platform.txt");
+		    File file = new File("UHCConfig/platform.txt");
 			platformIn = new Scanner(file);
 			//size of platform (from file)
 			int sizeX = Integer.parseInt(platformIn.next());
@@ -268,48 +269,50 @@ public enum GameState
 			int platX = x-Math.round(sizeX/2);
 			int platY = y+sizeY-2;
 			int platZ = z-Math.round(sizeZ/2);
-			//offsets player from center
+			//offsets player from center (positive in the x direction)
 			int spawnOffset = platformIn.nextInt();
 			spawn.add(spawnOffset, 0, 0);
-			//gets ids and symbols
+			// get material count, initialize arrays for symbols and materials
 			int materialCount = platformIn.nextInt();
 			List<Character> symbols = new ArrayList<Character>();
 			List<Material> materials = new ArrayList<Material>();
+            
+            // for testing only - to disable pass false to this method
+            /*
+            if(testing)
+            {
+                Bukkit.broadcastMessage("Materials Found: " +  Material.values().length);
+                for(Material testing: Material.values())
+                {
+                    System.out.print(testing.toString());
+                }
+                Bukkit.broadcastMessage("Platform dimensions: " + sizeX + ", " + sizeZ + ", " + sizeY);
+                Bukkit.broadcastMessage("Material Count: " + materialCount);
+            }
+            */
 
-      if(testing)
-      {
-        Bukkit.broadcastMessage("Materials Found: " +  Material.values().length);
-
-/*
-      for(Material testing: Material.values())
-      {
-        System.out.print(testing.toString());
-      }
-*/
-
-        Bukkit.broadcastMessage("Platform dimensions: " + sizeX + ", " + sizeZ + ", " + sizeY);
-        Bukkit.broadcastMessage("Material Count: " + materialCount);
-      }
-
+            // read symbols from file, get materials from strings
 			for(int i=0; i<materialCount; i++)
 			{
 				symbols.add(platformIn.next().charAt(0));
-        String nameIn = platformIn.next();
-        Material temp = Material.getMaterial(nameIn);
-        materials.add(temp);
+                String nameIn = platformIn.next();
+                Material temp = Material.getMaterial(nameIn);
+                materials.add(temp);
 			}
 
-      if(testing)
-      {
-        for (Material material: materials)
-        {
-          if(material != null)
-            Bukkit.broadcastMessage(symbols.get(materials.indexOf(material)) + " : "+ material.toString());
-          else
-            Bukkit.broadcastMessage(symbols.get(materials.indexOf(material)) + " : Error");
-        }
-      }
-
+            // for testing only - to disable pass false to this method
+            if(testing)
+            {
+                for (Material material: materials)
+                {
+                    if(material != null)
+                        Bukkit.broadcastMessage(symbols.get(materials.indexOf(material)) + " : "+ material.toString());
+                    else
+                        Bukkit.broadcastMessage(symbols.get(materials.indexOf(material)) + " : Error");
+                }
+            }
+            
+            // set blocks
 			for(int i=0; i<sizeY; i++)
 			{
 				for(int j=0; j<sizeZ; j++)
@@ -324,6 +327,7 @@ public enum GameState
 
 			platformIn.close();
 		}
+        // handle file open error
 		catch (FileNotFoundException e)
 		{
 			Bukkit.broadcastMessage("Problem constructing platform: File not found!");
@@ -370,59 +374,37 @@ public enum GameState
 		return true;
 	}
 
-  /*
-
-	public static Material getBlockFromID(int idIn, int metadataIn)
-	{
-		switch (idIn)
-		{
-		case 0:
-			return Material.AIR;
-		case 1:
-			return Material.STONE;
-		case 2:
-			return Material.GRASS;
-		case 3:
-			return Material.DIRT;
-		case 4:
-			return Material.COBBLESTONE;
-		}
-		return Material.AIR;
-	}
-
-*/
-
-  public static void playerSetup(UUID playerIDIn)
-  {
-    // test if player has already connected
-    if (!playerIDList.contains(playerIDIn))
+    public static void playerSetup(UUID playerIDIn)
     {
-      // get player, add to player list
-      Player player = Bukkit.getPlayer(playerIDIn);
-      playerIDList.add(playerIDIn);
+        // test if player has already connected
+        if (!playerIDList.contains(playerIDIn))
+        {
+            // get player, add to player list
+            Player player = Bukkit.getPlayer(playerIDIn);
+            playerIDList.add(playerIDIn);
 
-      Bukkit.broadcastMessage("Setting up player " + player.getDisplayName());
+            Bukkit.broadcastMessage("Setting up player " + player.getDisplayName());
 
-      // move player to spawn, set spawn
-      player.teleport(spawn);
-      player.setBedSpawnLocation(spawn, true);
-      // damage player to enable tab menu health display
-      player.setHealth(10);
-      // clear inventory
-      player.getInventory().clear();
-      // set gamemode to adventure, make players unkillable and unable to do damage, clear inventory
-      player.setGameMode(GameMode.ADVENTURE);
-      player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 720000, 255, false, false));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 720000, 255, false, false));
-      player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 720000, 255, false, false));
-      // add to live team
-      Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").addEntry(player.getName());
+            // move player to spawn, set spawn
+            player.teleport(spawn);
+            player.setBedSpawnLocation(spawn, true);
+            // damage player to enable tab menu health display
+            player.setHealth(10);
+            // clear inventory
+            player.getInventory().clear();
+            // set gamemode to adventure, make players unkillable and unable to do damage, clear inventory
+            player.setGameMode(GameMode.ADVENTURE);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 720000, 255, false, false));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 720000, 255, false, false));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 720000, 255, false, false));
+            // add to live team
+            Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").addEntry(player.getName());
+        }
+        else
+        {
+            Bukkit.broadcastMessage("Existing Player");
+        }
     }
-    else
-    {
-      Bukkit.broadcastMessage("Existing Player");
-    }
-  }
 
 	public static boolean playerBegin(UUID playerIDIn)
 	{
@@ -437,6 +419,20 @@ public enum GameState
 		playerIn.getInventory().clear();
 		return true;
 	}
+
+    /*
+    public static string getRemainingMessage(int remaining)
+    {
+        Random rand = new Random();
+
+        int sel = rand.nextInt(0);
+        switch(sel)
+        {
+            case 0: return "There are only " + remaining + " players remaining! Fight on!";
+        }
+    }
+    */
+
 	/*
 	 * END HELPER FUNCTIONS
 	 */
@@ -450,7 +446,7 @@ public enum GameState
 		// handle player as needed
 		if(currPhase.equals("setup"))
 		{
-      // game has not begun, setup player
+            // game has not begun, setup player
 			playerSetup(playerIn.getUniqueId());
 		}
 		else if(currPhase.equals("inactive"))
@@ -476,25 +472,25 @@ public enum GameState
 		{
 			String winnerName = Bukkit.getScoreboardManager().getMainScoreboard().getTeam("live").getName();
 			Bukkit.broadcastMessage("Game Over! " + winnerName + "is the winner!");
-      currPhase = "inactive";
-      end();
+            currPhase = "inactive";
+            end();
 		}
 		else if(remaining > 1)
 		{
 			Bukkit.broadcastMessage("There are " + remaining + " players remaining. Fight on!");
 		}
-    else if(remaining == 0)
-    {
-      Bukkit.broadcastMessage("There are no players remaining! What a tragedy!");
-      currPhase = "inactive";
-      end();
-    }
-    else if(remaining < 0)
-    {
-      Bukkit.broadcastMessage("Um, how did that happen");
-      currPhase = "inactive";
-      end();
-    }
+        else if(remaining == 0)
+        {
+            Bukkit.broadcastMessage("There are no players remaining! What a tragedy!");
+            currPhase = "inactive";
+            end();
+        }
+        else if(remaining < 0)
+        {
+            Bukkit.broadcastMessage("Um, how did that happen");
+            currPhase = "inactive";
+            end();
+        }
 		return true;
 	}
 
